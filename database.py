@@ -29,12 +29,25 @@ def _load_local_env():
 _load_local_env()
 
 def get_db_connection():
-    settings = dict(
-        host=os.getenv("DB_HOST", "localhost"),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME", "govtconnect_db")
-    )
+    settings = {
+        "host": os.getenv("DB_HOST", "localhost"),
+        "user": os.getenv("DB_USER", "root"),
+        "password": os.getenv("DB_PASSWORD"),
+        "database": os.getenv("DB_NAME", "govtconnect_db")
+    }
+
     if os.getenv("DB_PORT"):
         settings["port"] = int(os.environ["DB_PORT"])
+
+    # Configure secure TiDB connection
+    ca_content = os.getenv("DB_SSL_CA_CONTENT")
+
+    if ca_content:
+        ca_path = Path("/tmp/tidb-ca.pem")
+        ca_path.write_text(ca_content, encoding="utf-8")
+
+        settings["ssl_ca"] = str(ca_path)
+        settings["ssl_verify_cert"] = True
+        settings["ssl_verify_identity"] = True
+
     return mysql.connector.connect(**settings)
